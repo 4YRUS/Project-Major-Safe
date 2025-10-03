@@ -64,3 +64,8 @@ def return_canvas_response(request):
 
 
     return JsonResponse({"message":message})
+
+
+#Path Finder
+def pathFinder(request):
+	return render(request,"pathFinder.html")

@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style type="text/css">
+
+	.object{
+		height: 20px;
+		width: 20px;
+		border: 2px solid white;
+		border-radius: 2px;
+		margin: 5px;
+	}
+
+	.btn2{
+		width: 90%;
+		
+		border: 2px solid white;
+		color: white;
+	}
+	.btn2:hover{
+		background-color: gray;
+	}
+	
+</style>
+
+<h4 style="color : white; margin-top: 23px; position: absolute; top: 1%; left: 50%; transform: translate(-50%,-50%); ">Path Finder Algorithm</h4>
+
+<h6 style="color : gray; margin-top: 23px; position: absolute; bottom: 1%; left: 50%; transform: translate(-50%,-50%); "><i class="bi bi-info-circle"></i> Please use this webpage in fullscreen mode for best results.</h6>
+
+<div class="container" style="border: 2px solid white; height: 80vh; width: 79vw; position: absolute; top: 52%; left: 57%; transform: translate(-50%,-50%); border-radius: 10px; padding: 5px; display: flex; flex-wrap: wrap; ">	
+</div>
+
+<div class="tools" style="height: 80vh; width: 12vw; position: absolute; top: 52%; left: 4%; transform: translate(0%,-50%); border: 2px solid white; border-radius: 10px; flex-wrap: wrap; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly;">
+
+	<p class="status" style="color: white;">START</p>
+	<a class="start btn btn2 ">START POINT</a>
+	<a class="walls btn btn2 ">WALLS</a>
+	<a class="end btn btn2 ">DESTINATION</a>
+	<a class="clear btn btn2 ">ERASER</a>
+	<a class="fullclear btn btn2 ">CLEAR</a>
+	<a class="find btn btn2 ">FIND PATH</a>
+	
+</div>
+
+
+
+<script type="text/javascript">
+	container = document.querySelector(".container");
+	start = document.querySelector(".start");
+	walls = document.querySelector(".walls");
+	clear = document.querySelector(".clear");
+	fullclear = document.querySelector(".fullclear");
+	find = document.querySelector(".find");
+	end = document.querySelector(".end");
+	option = document.querySelector(".status");
+
+	rows = 18;
+	cols = 40;
+
+	let draw = false;
+	let state = 2
+
+
+
+	function delay(ms) {
+    	return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	start.addEventListener("click",e=>{
+		state=2;
+		option.innerText="START POINT"
+	})
+
+	walls.addEventListener("click",e=>{
+		state=1;
+		option.innerText="WALLS"
+	})
+
+	clear.addEventListener("click",e=>{
+		state=4;
+		option.innerText="ERASE"
+	})
+
+	end.addEventListener("click",e=>{
+		state=3;
+		option.innerText="DESTINATION"
+	})
+
+	
+	graph = []
+	temp = []
+
+
+	for(i=0;i<720;i++){
+			
+		let newDiv = document.createElement('div');
+		newDiv.setAttribute('data-value', '0');
+		newDiv.setAttribute('class','object')
+		container.appendChild(newDiv);
+		newDiv.addEventListener("click",e=>{
+
+			// data = newDiv.dataset
+			// console.log(data)
+
+			
+			if (state==2){
+				newDiv.setAttribute("style","background-color:#00d62e;")
+				newDiv.setAttribute('data-value', '2');
+			}
+			if (state==3){
+				newDiv.setAttribute("style","background-color:orange")
+				newDiv.setAttribute('data-value', '3');
+			}
+			if (state==4){
+				newDiv.setAttribute("style","background-color:transparent;")	
+				newDiv.setAttribute('data-value', '0');
+			}
+			if (state==1){
+				newDiv.setAttribute("style","background-color:brown;")	
+				newDiv.setAttribute('data-value', '1');	
+			}
+			console.log(e.target.dataset['value'])
+		})
+		newDiv.addEventListener("mouseover",(e)=>{
+			if (draw && state==1){
+				newDiv.setAttribute("style","background-color:brown;")
+				newDiv.setAttribute('data-value', '1');
+			}
+			if (draw && state==4){
+				newDiv.setAttribute("style","background-color:transparent;")		
+				newDiv.setAttribute('data-value', '0');
+			}
+
+		})
+
+		temp.push(newDiv)
+		if (temp.length==40){
+			graph.push(Array.from(temp))
+			temp=[]
+		}
+
+	}
+
+
+	container.addEventListener('mousedown',e=>{
+		draw = true
+	})
+	container.addEventListener('mouseup',e=>{
+		draw = false
+	})
+
+	
+
+	// async function delayedLoop() {
+	//     for (let i = 1; i <= 3; i++) {
+	//         console.log(`Iteration ${i}`);
+	//         await delay(1000); // Wait for 1 second
+	//     }
+	//     console.log("Finished");
+	// }
+
+	// delayedLoop();
+
+	function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	// walls list 
+	walls = []
+
+	async function trace(path) {
+		//start
+		graph[path[0][0]][path[0][1]].setAttribute("style","background-color:#00d62e;")	
+		graph[path[0][0]][path[0][1]].setAttribute('data-value', '2');
+		//destination 
+		graph[path[path.length-1][0]][path[path.length-1][1]].setAttribute("style","background-color:orange;")	
+		graph[path[path.length-1][0]][path[path.length-1][1]].setAttribute('data-value', '3');
+
+		for(j=0;j<walls.length;j++){
+			graph[walls[j][0]][walls[j][1]].setAttribute("style","background-color:brown;")	
+			graph[walls[j][0]][walls[j][1]].setAttribute('data-value', '1');
+		}
+
+		for(i=1;i<path.length-1;i++){
+			graph[path[i][0]][path[i][1]].setAttribute("style","background-color:lightblue;")	
+			graph[path[i][0]][path[i][1]].setAttribute('data-value', '0');
+			await sleep(100)
+		}
+		
+
+	}
+
+	async function find_path(){
+		queue = []
+		end = []
+		visit = new Set()
+		end_set = new Set()
+		start_set = new Set()
+
+		let r = 0 
+		let c = 0 
+
+		for (r=0;r<rows;r++){
+			for (c=0;c<cols;c++){
+				curr = graph[r][c].dataset['value']					
+				if (curr=='2'){
+					queue.push([r,c,[[r,c]]])
+					start_set.add(`${r},${c}`)
+				}
+				else if (curr=='3'){
+					end.push([r,c])
+					end_set.add(`${r},${c}`)
+				}
+				else if (curr=='1'){
+					walls.push([r,c])
+					visit.add(`${r},${c}`)
+
+				}
+			}
+		}
+
+		console.log(walls)
+		
+		while (queue.length>0 ){
+
+			// console.log(queue)
+			// console.log(visit)
+			cell = (queue.shift())
+			coordinates = `${cell[0]},${cell[1]}`
+
+			if ( visit.has(coordinates)){
+				continue;
+			}
+
+			if (end_set.has(coordinates)){
+				clear_all()
+				trace(cell[2])
+				break;
+			}
+
+			visit.add(coordinates)
+			r = cell[0]
+			c = cell[1]
+			path = cell[2]
+			if (!start_set.has(coordinates) && !end_set.has(coordinates)){
+				graph[r][c].style.backgroundColor = "lightblue";
+			}
+
+			
+			
+			if (c+1<cols && !visit.has(`${r},${c+1}`))
+				{
+					queue.push([r,c+1,path.concat([[r,c+1]])])
+				}
+
+			if (r+1<rows && !visit.has(`${r+1},${c}`))
+				{
+					queue.push([r+1,c,path.concat([[r+1,c]])])
+
+				}
+
+			if (c-1>=0 && !visit.has(`${r},${c-1}`))
+				{
+					queue.push([r,c-1,path.concat([[r,c-1]])])
+				}
+
+			if (r-1>=0 && !visit.has(`${r-1},${c}`))
+				{
+					queue.push([r-1,c,path.concat([[r-1,c]])])
+				}
+			
+			
+
+			await sleep(20);
+		}
+
+
+	}
+
+	find.addEventListener("click",e=>{
+		find_path()
+	})
+
+	function clear_all(){
+		for (r=0;r<rows;r++){
+			for(c=0;c<cols;c++){
+				graph[r][c].setAttribute("style","background-color:transparent;")	
+				graph[r][c].setAttribute('data-value', '0');	
+			}
+		}
+	}
+
+	fullclear.addEventListener("click",e=>{
+		clear_all()
+	})
+
+
+</script>
+
+{% endblock %}
