@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style>
+  :root{
+    --card-bg: rgba(255,255,255,0.06);
+    --card-border: rgba(255,255,255,0.12);
+    --accent: #6ea8fe;
+    --text: #e9eef8;
+    --muted: #b9c2d6;
+    --gap: 14px;
+  }
+
+  body{
+/*    background: linear-gradient(180deg,#0f1724 0%, #071124 100%);*/
+    color: var(--text);
+    margin: 0;
+    
+  }
+
+  .container{
+    max-width: 840px;
+    margin: 0 auto;
+  }
+
+  h1{
+    margin: 0 0 18px 0;
+    font-size: 1.4rem;
+    color: var(--text);
+  }
+
+  form.mcq {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .question {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(2,6,23,0.45) inset;
+  }
+
+  .q-title{
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* hide default radio but keep it accessible */
+  .options input[type="radio"]{
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* styled option label */
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: transform .06s ease, box-shadow .12s ease, border-color .12s ease;
+    user-select: none;
+    background: rgba(255,255,255,0.01);
+    color: var(--muted);
+  }
+
+  .option:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(6,10,20,0.5);
+  }
+
+  /* show a small circle letter on left */
+  .option::before{
+    content: attr(data-letter);
+    display: inline-grid;
+    place-items: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  /* when the radio is checked, style the following label */
+  .options input[type="radio"]:checked + label.option {
+    border-color: gray;
+    box-shadow: 0 6px 20px rgba(256,256,256	,0.12);
+    color: var(--text);
+    background: linear-gradient(180deg, rgba(110,168,254,0.06), rgba(110,168,254,0.02));
+  }
+
+  /* make question number small on right for compact layout */
+  .meta {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* responsive adjustments */
+  @media (max-width:520px){
+    .option { padding: 12px; gap: 10px; }
+    .option::before { min-width: 26px; height: 26px; font-size: 0.8rem; }
+  }
+
+  /* submit button */
+  .actions {
+    display:flex;
+    justify-content:flex-end;
+    margin-top:6px;
+  }
+  .btn-mcq {
+    background: linear-gradient(90deg, #4f46e5, #6ea8fe);
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 100;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  .btn-mcq:active{ transform: translateY(1px); }
+</style>
+
+  <div class="marks-container" style="height: 100vh; width: 100vw; position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); display: flex; justify-content: center; align-items: center; background-color: rgba(0,0,0,0); backdrop-filter: blur(2px); visibility: hidden; z-index: 100;">
+
+    <div class="marks" style="height: 400px; width: 350px; background-color: #191919; border-radius: 10px; border: 2px solid rgba(256,256,256,0.7); display: flex; flex-direction: column; align-items: center; justify-content: space-around;">
+
+      <div class="marks-message" style="display: flex; flex-direction: column; align-items: center; justify-content: space-around; margin-top: 30px; "> 
+          <h1 class="final-score" style="font-size: 60px;"></h1>
+          <span style="text-align: center; margin: 20px"> Congratulations 👾🥳🎉 you have completed the quiz. </span>
+      </div>
+      <button class="btn-mcq close-button" style="margin-bottom: 30px;">Close</button>
+      
+    </div>
+    
+  </div>
+
+  <h4 style="color : white; margin-top: 23px; position: absolute; top: 1%; left: 50%; transform: translate(-50%,-50%); ">MCQ Test</h4>
+
+  <div class="container" style="margin-top: 20px;">
+    <center><h1 class="topic" ></h1></center>
+
+    <form id="mcqForm" class="mcq" autocomplete="off" novalidate>
+
+      <!-- <div class="question">
+        <p class="q-title">1. What is the capital of France?</p>
+        <div class="options">
+          <input type="radio" id="q1a" name="q1" value="A">
+          <label for="q1a" class="option" data-letter="A">Paris</label>
+
+          <input type="radio" id="q1b" name="q1" value="B">
+          <label for="q1b" class="option" data-letter="B">Rome</label>
+
+          <input type="radio" id="q1c" name="q1" value="C">
+          <label for="q1c" class="option" data-letter="C">Madrid</label>
+
+          <input type="radio" id="q1d" name="q1" value="D">
+          <label for="q1d" class="option" data-letter="D">Berlin</label>
+        </div>
+      </div> -->
+
+      <!-- <div class="actions">
+        <button type="submit" class="btn">Submit</button>
+      </div> -->
+    </form>
+  </div>
+
+  
+  <script>
+
+  	let formContainer = document.querySelector("#mcqForm")
+  	let i = 0
+  	let topic = document.querySelector(".topic")
+  	let questionData = {}
+    let closebutton = document.querySelector(".close-button")
+    let markscard = document.querySelector(".marks-container")
+
+    closebutton.addEventListener('click',e=>{
+      e.stopPropagation()
+      markscard.style.visibility = "hidden"
+    })
+
+  	function getCookie(name) {
+	      let cookieValue = null;
+	      if (document.cookie && document.cookie !== '') {
+	          const cookies = document.cookie.split(';');
+	          for (let i = 0; i < cookies.length; i++) {
+	              const cookie = cookies[i].trim();
+	              // Does this cookie string begin with the name we want?
+	              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+	                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+	                  break;
+	            }
+	        }
+	    }
+	    return cookieValue;
+	}
+
+	fetch('http://127.0.0.1:8000/mcq-test/',{
+    	method : 'POST',
+    	headers : {
+    		'X-CSRFToken' : getCookie("csrftoken"),
+    	}
+    })
+    .then(response=>{
+    	return response.json()
+    })
+    .then(data=>{
+    	
+    	questionData = structuredClone(data)
+
+    	console.log(data)
+
+    	topic.innerText = data.topic
+
+    	for( j=0; j<data.mcqs.length; j++){
+    		i = j+1
+    		formContainer.innerHTML+=`<div class="question">
+    	        <p class="q-title">${i}. ${data.mcqs[j].question}</p>
+    	        <div class="options">
+    	          <input type="radio" id="q${i}a" name="q${i}" value="A">
+    	          <label for="q${i}a" class="option q${i}a" data-letter="A">${data.mcqs[j].options[0].slice(2)}</label>
+    	
+    	          <input type="radio" id="q${i}b" name="q${i}" value="B">
+    	          <label for="q${i}b" class="option q${i}b" data-letter="B">${data.mcqs[j].options[1].slice(2)}</label>
+    	
+    	          <input type="radio" id="q${i}c" name="q${i}" value="C">
+    	          <label for="q${i}c" class="option q${i}c" data-letter="C">${data.mcqs[j].options[2].slice(2)}</label>
+    	
+    	          <input type="radio" id="q${i}d" name="q${i}" value="D">
+    	          <label for="q${i}d" class="option q${i}d" data-letter="D">${data.mcqs[j].options[3].slice(2)}</label>
+    	        </div>
+    	      </div>`	
+    	}
+
+    	formContainer.innerHTML+=`<div class="actions">
+        <button type="submit" class="btn-mcq" id="submit-button" style = "display: block">Submit</button>
+        <button class = "btn-mcq" id="show-results" style = "display: none">Show Results</button>
+      </div>`
+
+      submit = document.querySelector("#submit-button")
+      showButton = document.querySelector("#show-results")
+      result = 0
+      finalscore = document.querySelector(".final-score")
+
+      submit.addEventListener("click",e=>{
+
+      	// console.log("hello form has been submited.")
+        markscard.style.visibility = 'visible'
+      	submit.style.display = "none"
+      	showButton.style.display = "block"
+
+      	const answers = {};
+  	    for (let i=1; i<=10; i++){
+  	      const name = 'q' + i;
+  	      const checked = document.querySelector(`input[name="${name}"]:checked`);
+  	      answers[name] = checked ? checked.value : null;
+  	    }
+        for(i=0;i<10;i++){
+          let question = `q${i+1}`
+
+          useranswer = answers[question]
+          correctanswer = questionData.mcqs[i].answer[0]
+
+          result+= 1 ? useranswer===correctanswer : 0
+
+          if(useranswer!==null){
+            option = document.querySelector(`.${question + useranswer.toLowerCase()}`)
+            option.style.backgroundColor = "rgba(255, 19, 15, 0.5)"
+          }
+          option = document.querySelector(`.${question + correctanswer.toLowerCase()}`)
+          option.style.backgroundColor = "rgba(53, 232, 65, 0.5)"
+
+
+          console.log(question,useranswer, correctanswer)
+        }
+	      console.log('Collected answers:', answers);
+        finalscore.innerText = `${result}/10`
+      })
+
+      showButton.addEventListener("click",e=>{
+        e.stopPropagation()
+        markscard.style.visibility = 'visible'
+      })
+      
+
+    })
+    .catch(error =>{
+    	console.log(error)
+    })
+
+
+    document.getElementById('mcqForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      // const form = e.target;
+      // const answers = {};
+      // for (let i=1; i<=10; i++){
+      //   const name = 'q' + i;
+      //   const checked = form.querySelector(`input[name="${name}"]:checked`);
+      //   answers[name] = checked ? checked.value : null;
+      // }
+      // console.log('Collected answers:', answers);
+      // alert('Answers collected in console. (Replace alert with your submit logic)');
+    });
+
+
+   
+
+  </script>
+ 
+
+{% endblock %}

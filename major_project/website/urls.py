@@ -11,5 +11,12 @@ urlpatterns = [
     path('canvasResponse/',views.return_canvas_response,name="canvas"),
 
     path('path-finder/',views.pathFinder, name="pathFinder"),
+
+    path('mcq-test-home/',views.mcqTestHome, name="mcqTestHome"),
+    path('mcq-test/',views.mcqTest, name="mcqTest"),
+    path('pdf-data/',views.getPdfs,name="GetPdfs"),
+    path("extract-existing-pdfs/<int:pk>/",views.extractExistingPdf,name="ExtractExistingPdfs"),
+    path('extract-mcqs/',views.extractMcqs,name="ExtractMcqs"),
+
     
 ]

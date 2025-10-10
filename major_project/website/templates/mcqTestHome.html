@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<style type="text/css">
+	
+	.card{
+		color: white;
+		min-width: 100px;
+		max-width: auto;
+		height: 100px ;
+		background-color: transparent;
+		border: 2px solid white;
+		display: flex; 
+		justify-content: center; 
+		align-items: center;
+		padding: 10px; 
+		text-decoration: none;
+		transition: background-color 0.3s ease;
+	}
+	.card:hover{
+		background-color: rgba(225, 225 , 225 , 0.3);
+	}
+
+	.drop-zone {
+		width: 30vw;
+		height: 30vh;
+		border: 2px dashed white;
+		border-radius: 10px;
+		padding: 30px;
+		text-align: center;
+		cursor: pointer;
+		color: #3d3e40;
+		margin: 20px auto;
+		background-color: rgba(225,225, 225, 0.6);
+		display: flex;
+		flex-direction: column; 
+		justify-content: space-around;
+		align-items: center;
+
+
+	}
+
+	.drop-zone.dragover {
+	  background: #f0f8ff;
+	  border-color: dodgerblue;
+	  color: dodgerblue;
+	}
+
+	.loading-screen{
+		height: 100vh;
+		width: 100vw; 
+		position: absolute; 
+		top: 50%; 
+		left: 50%; 
+		transform: translate(-50%, -50%); 
+		display: flex; 
+		justify-content: center; 
+		align-items: center;  
+		background-color: rgba(225,225, 225, 0.2); 
+		backdrop-filter: blur(2px);
+		visibility: hidden; 
+		z-index: 150;
+	}
+
+	.loader {
+
+	  height: 150px;
+	  aspect-ratio: 2;
+	  border-bottom: 3px solid #0000;
+	  background: 
+	    linear-gradient(90deg,gray 50%,#0000 0)
+	    -25% 100%/50% 3px repeat-x border-box;
+	  position: relative;
+	  animation: l3-0 .75s linear infinite;
+
+	}
+	.loader:before {
+	  content: "";
+	  position: absolute;
+	  inset: auto 42.5% 0;
+	  aspect-ratio: 1;
+	  border-radius: 50%;
+	  background: whitesmoke;
+	  animation: l3-1 .75s cubic-bezier(0,900,1,900) infinite;
+	}
+	@keyframes l3-0 {
+	  to {background-position: -125% 100%}
+	}
+	@keyframes l3-1 {
+	  0%,2% {bottom: 0%}
+	  98%,to {bottom:.1%}
+	}
+
+
+
+</style>
+
+<div class="add-container" style="height: 100vh; width: 100vw; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; justify-content: center; align-items: center;  background-color: rgba(225,225, 225, 0.2); backdrop-filter: blur(2px); visibility: hidden; z-index: 100;">
+
+	<div class="drop-zone" id="dropZone">
+	  <span id="dropText">Drop file here or click to upload</span>
+	  <input type="file" id="fileInput" hidden>
+	  <button class="btn btn-secondary submit-pdf-input">SUBMIT</button>
+	</div>
+
+</div>
+
+<div class="loading-screen">
+	<div class="loader"></div> 
+</div>
+
+<h4 style="color : white; margin-top: 23px; position: absolute; top: 1%; left: 50%; transform: translate(-50%,-50%); ">MCQ Test</h4>
+
+<center>
+	<!-- <a  href = "#" style="visibility: hidden;"></a> -->
+	<div class='topic-container' style=" width: 90vw; height: auto; padding: 10px; display: flex; flex-wrap : wrap; max-width: 90%; justify-content: center; gap: 20px;">
+		<div class='card' data-value="add"><h5 data-value="add" style="display: flex ; flex-direction: column; " ><i data-value="add" class="bi bi-journal-plus" style="font-size: 40px; "></i><span  data-value="add" style="font-size: 15px"> ADD A PDF</span></h5>
+		</div>
+		<!-- <div class='card' data-value="0" ><h5>MICROSOFT</h5></div> -->
+	</div>
+</center>
+
+<script type="text/javascript">
+	
+	let topicContainer = document.querySelector(".topic-container")
+	let addContainer = document.querySelector(".add-container")
+	// let uploadPdf = document.querySelector(".upload-pdf")
+	const dropZone = document.getElementById("dropZone");
+	const fileInput = document.getElementById("fileInput");
+	const dropText = document.getElementById("dropText");
+	let submitButton = document.querySelector(".submit-pdf-input");
+	let loadingScreen = document.querySelector(".loading-screen")
+
+	console.log(loadingScreen)
+
+	function getCookie(name) {
+	      let cookieValue = null;
+	      if (document.cookie && document.cookie !== '') {
+	          const cookies = document.cookie.split(';');
+	          for (let i = 0; i < cookies.length; i++) {
+	              const cookie = cookies[i].trim();
+	              // Does this cookie string begin with the name we want?
+	              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+	                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+	                  break;
+	            }
+	        }
+	    }
+	    return cookieValue;
+	}
+
+	fetch('http://127.0.0.1:8000/pdf-data/')
+    .then(response=>{
+    	return response.json()
+    })
+    .then(data=>{
+    	console.log(data)
+    	data = data.data
+		for(i=0; i<data.length; i++){
+
+			topicContainer.innerHTML += `
+				<div class='card' data-value="${data[i].id}" ><h5 data-value="${data[i].id}">${data[i].pdf.slice(5,-4)}</h5></div>
+			`
+		}    	
+    })
+
+    function reset(text){
+    	console.log(fileInput.files[0])
+    	let dt = new DataTransfer();
+		fileInput.files = dt.files;
+		dropText.textContent = text
+    }
+
+    addContainer.addEventListener("click",e=>{    	
+    	reset("Drop file here or click to upload")
+    	addContainer.style.visibility = 'hidden'
+    })
+
+    submitButton.addEventListener("click",e=>{
+    	e.stopPropagation()
+    	if ( fileInput.files.length === 0 ){
+    		reset("You have not given any PDF file Please Provide One.")
+    		return ;
+    	}
+    	if (fileInput.files[0].type!=="application/pdf"){
+    		reset(`You have Provided a ${fileInput.files[0].type} type file please provide a PDF file.`)
+    		return ; 
+    	}
+
+    	console.log("SUBMIT");
+
+    	file = fileInput.files[0]
+    	let formData = new FormData();
+    	formData.append("pdf",file);
+
+
+    	addContainer.style.visibility = 'hidden'
+    	loadingScreen.style.visibility = 'visible'
+    	fetch('http://127.0.0.1:8000/extract-mcqs/',{
+        	method : 'POST',
+        	headers : {
+        		'X-CSRFToken' : getCookie("csrftoken"),
+        	},
+        	body : formData
+        })
+        .then(response=>{
+        	return response.json()
+        })
+        .then(data=>{
+        	loadingScreen.style.visibility = 'hidden'
+        	if (data.flag){
+        		window.location.href = 	`http://127.0.0.1:8000/mcq-test`
+        		console.log(data)
+        	}
+        	else{
+        		reset("There was an error please click here again upload the PDF.")
+        		addContainer.style.visibility = 'visible'
+        		console.log(data)
+        	}
+        	
+
+        })
+        .catch(error =>{
+        	console.log(error)
+        })
+
+    })
+
+    // uploadPdf.addEventListener("click",e=>{
+    // 	e.stopPropagation();
+    // 	console.log(uploadPdf)
+    // })
+
+    topicContainer.addEventListener("click",e=>{
+    	if (e.target.dataset.value=="add"){
+    		console.log(fileInput.files)
+    		reset("Drop file here or click to upload")
+    		addContainer.style.visibility = 'visible'
+    	}
+	    else{
+	    	if( e.target.dataset.value!== undefined){
+		    	console.log(e.target.dataset.value)
+		    	loadingScreen.style.visibility = 'visible'
+		    	fetch(`http://127.0.0.1:8000/extract-existing-pdfs/${e.target.dataset.value}`)
+		        .then(response=>{
+		        	return response.json()
+		        })
+		        .then(data=>{
+		        	loadingScreen.style.visibility = 'hidden'
+		        	if (data.flag){
+		        		window.location.href = 	`http://127.0.0.1:8000/mcq-test`
+		        		console.log(data)
+		        	}
+		        	else{
+		        		reset("There was an error please click here again upload the PDF.")
+		        		addContainer.style.visibility = 'visible'
+		        		console.log(data)
+		        	}
+		        	
+
+		        })
+		        .catch(error =>{
+		        	console.log(error)
+		        })
+		    	// window.location.href = 	`http://127.0.0.1:8000/pdf-extraction/${e.target.dataset.value}`
+	    	}
+	    }
+    })
+
+
+	dropZone.addEventListener("click", (e) => {
+		e.stopPropagation();
+		fileInput.click()
+	});
+
+	fileInput.addEventListener("change", (e) => {
+		e.stopPropagation();
+	  if (fileInput.files.length) {
+	    dropText.textContent = fileInput.files[0].name;
+	  }
+	});
+
+
+	dropZone.addEventListener("dragover", (e) => {
+	  e.preventDefault();
+	  dropZone.classList.add("dragover");
+	});
+
+	dropZone.addEventListener("dragleave", () => {
+	  dropZone.classList.remove("dragover");
+	});
+
+	dropZone.addEventListener("drop", (e) => {
+	  e.preventDefault();
+	  dropZone.classList.remove("dragover");
+
+	  if (e.dataTransfer.files.length) {
+	    fileInput.files = e.dataTransfer.files;
+	    dropText.textContent = e.dataTransfer.files[0].name;
+	  }
+	});
+
+
+
+
+
+
+</script>
+
+
+
+{% endblock %}
